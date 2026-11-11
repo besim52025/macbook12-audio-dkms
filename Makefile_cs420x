@@ -1,0 +1,19 @@
+KERNELRELEASE ?= $(shell uname -r)
+KERNELDIR ?= /lib/modules/$(KERNELRELEASE)
+
+KERNELBUILD := $(KERNELDIR)/build
+
+# Debian kernels enable BTF for modules, which requires pahole (the
+# "dwarves" package).  Fall back to a no-op when pahole is missing:
+# the module still builds and loads fine, just without BTF debug data.
+PAHOLE := $(shell command -v pahole >/dev/null 2>&1 && echo pahole || echo true)
+
+all:
+	$(MAKE) -C $(KERNELBUILD) M=$(shell pwd)/build/hda/codecs/cirrus modules PAHOLE=$(PAHOLE)
+
+clean:
+	$(MAKE) -C $(KERNELBUILD) M=$(shell pwd)/build/hda/codecs/cirrus clean
+
+install:
+	install -D -m 0644 $(shell pwd)/build/hda/codecs/cirrus/snd-hda-codec-cs420x.ko $(KERNELDIR)/updates/snd-hda-codec-cs420x.ko
+	depmod -a $(KERNELRELEASE)

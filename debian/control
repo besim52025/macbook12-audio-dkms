@@ -1,0 +1,26 @@
+Source: macbook12-audio-dkms
+Section: kernel
+Priority: optional
+Maintainer: MacBook12 Audio Packaging <packaging@localhost>
+Standards-Version: 4.7.2
+Rules-Requires-Root: no
+Homepage: https://github.com/leifliddy/macbook12-audio-driver
+
+Package: macbook12-audio-dkms
+Architecture: all
+Depends: dkms (>= 3.0)
+Recommends: linux-headers-amd64 | linux-headers-cloud-amd64 | linux-headers-rt-amd64, dwarves
+Suggests: linux-source-6.12, wireplumber | pipewire-audio
+Description: CS4208 audio driver for the 12" MacBook 9,1/10,1 (DKMS)
+ Out-of-tree HD-audio codec driver for the Cirrus Logic CS4208 codec
+ found in the 12-inch MacBook9,1 (Early 2016) and MacBook10,1 (2017).
+ It replaces the in-kernel snd-hda-codec-cirrus module with a version
+ that replays the macOS codec initialization sequence, enabling the
+ internal speakers, headphone jack, automatic jack switching and the
+ internal microphone.
+ .
+ Built automatically with DKMS for every installed kernel. Contains
+ Debian 13 fixes for the "+deb13" kernel release naming, and bundles
+ the kernel sound/pci/hda sources (6.12.115) so building does not
+ require the ~1.5 GB linux-source-6.12 package; that package is
+ optionally used for an exact source match when installed.

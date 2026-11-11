@@ -1,0 +1,53 @@
+#!/usr/bin/make -f
+# debian/rules for macbook12-audio-dkms (no debhelper needed)
+
+package := macbook12-audio-dkms
+module  := macbook12-audio-driver
+version := 0.3
+srcdir  := /usr/src/$(module)-$(version)
+dest    := debian/$(package)
+
+build:
+
+binary: binary-indep
+
+binary-arch:
+
+binary-indep:
+	rm -f debian/files
+	rm -rf $(dest)
+	install -d $(dest)/DEBIAN \
+		$(dest)$(srcdir)/patch_cirrus \
+		$(dest)$(srcdir)/bundled/6.12 \
+		$(dest)/usr/share/doc/$(package)/examples \
+		$(dest)/etc/wireplumber/wireplumber.conf.d
+	install -m 0644 dkms.conf Makefile_cirrus Makefile_cs420x $(dest)$(srcdir)/
+	install -m 0755 prepare.cirrus.driver.sh $(dest)$(srcdir)/
+	install -m 0644 bundled/6.12/sound-pci-hda.tar.xz bundled/6.12/README $(dest)$(srcdir)/bundled/6.12/
+	install -m 0644 patch_cirrus/patch_cirrus.c patch_cirrus/cs420x.c \
+		patch_cirrus/patch_cirrus_a1534_setup.h \
+		patch_cirrus/patch_cirrus_a1534_pcm.h \
+		patch_cirrus/Makefile_cirrus patch_cirrus/Makefile_cs420x \
+		$(dest)$(srcdir)/patch_cirrus/
+	install -m 0644 contrib/wireplumber/wireplumber.conf.d/51-macbook-cs4208-softvol.conf \
+		$(dest)/etc/wireplumber/wireplumber.conf.d/
+	install -m 0644 contrib/wireplumber/main.lua.d/51-macbook-cs4208-softvol.lua \
+		$(dest)/usr/share/doc/$(package)/examples/
+	install -m 0644 debian/README.Debian debian/copyright \
+		$(dest)/usr/share/doc/$(package)/
+	gzip -9n -c debian/changelog > $(dest)/usr/share/doc/$(package)/changelog.Debian.gz
+	install -m 0644 debian/control.binary $(dest)/DEBIAN/control
+	size=$$(du -sk --apparent-size $(dest) | cut -f1); \
+		sed -i "s/^Installed-Size: .*/Installed-Size: $$size/" $(dest)/DEBIAN/control
+	install -m 0644 debian/conffiles $(dest)/DEBIAN/conffiles
+	install -m 0755 debian/postinst debian/prerm $(dest)/DEBIAN/
+	cd $(dest) && find . -type f ! -path './DEBIAN/*' -exec md5sum {} \; \
+		| sed 's|  \./|  |' > DEBIAN/md5sums
+	dpkg-deb --root-owner-group --build $(dest) ..
+	rm -rf $(dest)
+	echo "$(package)_$(version)_all.deb kernel optional" >> debian/files
+
+clean:
+	rm -rf debian/$(package) debian/files
+
+.PHONY: build binary binary-arch binary-indep clean

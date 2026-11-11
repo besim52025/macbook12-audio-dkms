@@ -1,0 +1,86 @@
+#!/bin/bash
+# postinst for macbook12-audio-dkms
+# Registers the driver source with DKMS, builds and installs it for every
+# kernel that has headers, and tries to activate it for the running kernel.
+
+set -e
+
+MODULE="macbook12-audio-driver"
+VERSION="0.3"
+
+case "$1" in
+  configure) ;;
+  *) exit 0 ;;
+esac
+
+if ! command -v dkms >/dev/null 2>&1; then
+  echo "macbook12-audio-dkms: dkms is not available, skipping driver build." >&2
+  exit 0
+fi
+
+# Clean up DKMS state left by other versions (e.g. the upstream manual
+# installer registers macbook12-audio-driver/0.1).
+existing="$(dkms status -m "$MODULE" 2>/dev/null \
+  | grep -E "^/?${MODULE}/" \
+  | sed -E "s#^/?${MODULE}/([^,]+),.*#\1#" | sort -u || true)"
+for old in $existing; do
+  if [ "$old" != "$VERSION" ]; then
+    echo "macbook12-audio-dkms: removing old DKMS module ${MODULE}/${old} ..."
+    dkms remove -m "$MODULE" -v "$old" --all >/dev/null 2>&1 || true
+  fi
+done
+
+# Remove stale source trees of other versions.
+for d in /usr/src/${MODULE}-*; do
+  [ -d "$d" ] || continue
+  case "$d" in
+    "/usr/src/${MODULE}-${VERSION}") ;;
+    *) rm -rf -- "$d" ;;
+  esac
+done
+
+dkms remove -m "$MODULE" -v "$VERSION" --all >/dev/null 2>&1 || true
+dkms add -m "$MODULE" -v "$VERSION" >/dev/null 2>&1 || true
+
+built_any=0
+for rel in $(for d in /lib/modules/*/; do
+               [ -e "${d}build" ] || continue
+               basename "$d"
+             done | sort -V); do
+  echo "macbook12-audio-dkms: building driver for kernel ${rel} ..."
+  if dkms build -m "$MODULE" -v "$VERSION" -k "$rel" >/tmp/macbook12-audio-dkms.build.log 2>&1 \
+     && dkms install -m "$MODULE" -v "$VERSION" -k "$rel" >/dev/null 2>&1; then
+    built_any=1
+  else
+    echo "macbook12-audio-dkms: WARNING: build failed for kernel ${rel}." >&2
+    echo "  Details: /tmp/macbook12-audio-dkms.build.log" >&2
+    echo "  Re-run manually with: dkms build -m ${MODULE} -v ${VERSION} -k ${rel}" >&2
+  fi
+done
+
+if [ "$built_any" = 0 ]; then
+  echo "macbook12-audio-dkms: the driver was not installed for any kernel." >&2
+  echo "  Make sure kernel headers are installed and configured:" >&2
+  echo "    sudo apt update" >&2
+  echo "    sudo apt install linux-headers-amd64 dwarves" >&2
+  echo "  (Optional, for an exact kernel source match:)" >&2
+  echo "    sudo apt install linux-source-6.12" >&2
+  echo "  then re-run:  sudo dpkg-reconfigure macbook12-audio-dkms" >&2
+  exit 0
+fi
+
+# Best effort: activate the new driver for the currently running kernel by
+# reloading the HDA stack.  A reboot always works.
+running="$(uname -r)"
+if dkms status -m "$MODULE" -v "$VERSION" -k "$running" 2>/dev/null | grep -q installed; then
+  if command -v modinfo >/dev/null 2>&1 \
+     && modinfo -n snd-hda-codec-cirrus 2>/dev/null | grep -q "/updates/"; then
+    echo "macbook12-audio-dkms: reloading the HDA audio stack to activate the new driver ..."
+    modprobe -r snd_hda_intel 2>/dev/null || true
+    sleep 1
+    modprobe snd_hda_intel 2>/dev/null || true
+    echo "macbook12-audio-dkms: done. If audio does not come up, reboot once."
+  fi
+fi
+
+exit 0

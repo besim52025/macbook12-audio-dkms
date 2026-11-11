@@ -1,0 +1,39 @@
+macbook12-audio-dkms (0.3) trixie; urgency=medium
+
+  * Relax dependencies: only dkms is mandatory; kernel headers and dwarves
+    are Recommends, so the package installs even when the header
+    metapackages cannot be resolved (postinst reports what is missing).
+  * Bundle the kernel sound/pci/hda sources (6.12.115) - building no longer
+    requires the ~1.5 GB linux-source-6.12 package; it is used for an
+    exact source match when installed, or via MACBOOK12_AUDIO_KERNEL_SRC.
+  * Makefiles: fall back to a no-op pahole when dwarves is not installed,
+    so the BTF step no longer fails the build (module is built without
+    BTF debug data).
+
+ -- MacBook12 Audio Packaging <packaging@localhost>  Mon, 09 Nov 2026 12:30:00 +0000
+
+macbook12-audio-dkms (0.2) trixie; urgency=medium
+
+  * Initial Debian package, based on leifliddy/macbook12-audio-driver
+    (snd_hda_codec_cs420x for the Cirrus Logic CS4208 in the 12-inch
+    MacBook9,1 / MacBook10,1).
+  * prepare.cirrus.driver.sh: accept Debian kernel releases such as
+    6.12.115+deb13-amd64 (upstream regex rejected the "+deb13" suffix,
+    causing "Unsupported kernel release" DKMS failures).
+  * prepare.cirrus.driver.sh: locate the Debian kernel source tarball
+    /usr/src/linux-source-6.12.tar.xz and derive the archive top-level
+    directory from the file name (upstream expected a nonexistent
+    linux-source-<full-version> tarball and a linux-<version>/ prefix).
+  * prepare.cirrus.driver.sh: support MACBOOK12_AUDIO_KERNEL_SRC to point
+    at a kernel source tarball explicitly (custom kernels, offline builds).
+  * dkms.conf: strip the "+deb13" suffix before computing major/minor so
+    the built module is picked up in the right location for 6.12 kernels.
+  * dkms.conf: build with KERNELRELEASE=${kernelver} so DKMS builds for
+    the target kernel rather than the currently running one.
+  * Makefile_cirrus/Makefile_cs420x: allow KERNELDIR override.
+  * Depend on dwarves (pahole) - Debian kernels enable BTF for modules
+    and the build fails without it.
+  * Ship the WirePlumber software-volume config (speakers have no usable
+    hardware volume control) as a conffile.
+
+ -- MacBook12 Audio Packaging <packaging@localhost>  Mon, 09 Nov 2026 11:00:00 +0000

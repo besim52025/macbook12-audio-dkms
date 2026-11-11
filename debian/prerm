@@ -1,0 +1,15 @@
+#!/bin/bash
+# prerm for macbook12-audio-dkms
+
+set -e
+
+MODULE="macbook12-audio-driver"
+VERSION="0.3"
+
+if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
+  if command -v dkms >/dev/null 2>&1; then
+    dkms remove -m "$MODULE" -v "$VERSION" --all >/dev/null 2>&1 || true
+  fi
+fi
+
+exit 0

@@ -1,0 +1,35 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: macbook12-audio-driver
+Source: https://github.com/leifliddy/macbook12-audio-driver
+
+Files: *
+Copyright: 2026 leifliddy and contributors
+           2009-2024 Takashi Iwai and the ALSA project (kernel patch_cirrus.c basis)
+License: GPL-2.0-or-later
+ This package is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <https://www.gnu.org/licenses/>.
+ On Debian systems, the complete text of the GNU General Public
+ License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+
+Files: bundled/6.12/*
+Copyright: 2024-2026 Linux kernel and ALSA contributors
+ (sound/pci/hda snapshot of Linux 6.12.115, taken from Debian
+ linux-source-6.12)
+License: GPL-2.0-only
+ Individual files in this snapshot carry either "GPL-2.0-only" or
+ "GPL-2.0-or-later" SPDX headers; they are distributed here under the
+ terms of GPL-2.0-only (the more restrictive of the two).
+
+Files: debian/*
+Copyright: 2026 MacBook12 Audio Packaging <packaging@localhost>
+License: GPL-2.0-or-later

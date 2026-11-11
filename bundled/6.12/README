@@ -1,0 +1,5 @@
+Linux kernel sound/pci/hda sources (bundle)
+Source: Debian linux-source-6.12 6.12.115-2 (upstream Linux 6.12.115)
+License: GPL-2.0
+Used by prepare.cirrus.driver.sh when no matching linux-source
+package is installed, for 6.12.x kernels only.

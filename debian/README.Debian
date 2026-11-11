@@ -1,0 +1,136 @@
+macbook12-audio-dkms for Debian 13 (trixie)
+===========================================
+
+What this is
+------------
+Out-of-tree HD-audio codec driver for the Cirrus Logic CS4208 codec of the
+12-inch MacBook 9,1 (Early 2016) and MacBook 10,1 (2017), packaged with DKMS
+for Debian 13. It replaces the in-kernel snd-hda-codec-cirrus module with a
+version that replays the macOS codec initialization sequence, so the internal
+speakers, the headphone jack, automatic jack switching and the internal
+microphone work.
+
+This package fixes the Debian-13-specific failures of the upstream
+leifliddy/macbook12-audio-driver installer:
+
+  * the DKMS prepare step rejected Debian kernel releases such as
+    "6.12.115+deb13-amd64" ("Unsupported kernel release"),
+  * it looked for a kernel source tarball that Debian never installs
+    (Debian ships /usr/src/linux-source-6.12.tar.xz from the
+    linux-source-6.12 package),
+  * DKMS built for the running kernel instead of the target kernel,
+  * the module BTF step failed because "pahole" was missing (Debian kernels
+    enable BTF for modules).
+
+The module was verified to compile, link and generate BTF against the
+Debian 13 linux-headers-6.12.115+deb13-amd64 headers.
+
+The package bundles the kernel sound/pci/hda sources (Linux 6.12.115),
+so building does NOT require the ~1.5 GB linux-source-6.12 package.
+If you want an exact source match with your running kernel, install
+linux-source-6.12 and the build will use it automatically.
+
+Installation
+------------
+Kernel headers are needed to build the module; install them first if
+they are not present yet:
+
+    sudo apt update
+    sudo apt install linux-headers-amd64 dwarves
+
+Then install the package (installs cleanly even if some of the above
+failed; the build step reports exactly what is missing):
+
+    sudo apt install ./macbook12-audio-dkms_0.3_all.deb
+
+(or: sudo dpkg -i macbook12-audio-dkms_0.3_all.deb)
+
+The package builds the module for every installed kernel that has
+headers during installation. Then reboot (or let the installer reload
+the audio stack):
+
+    sudo reboot
+
+Required: speaker software volume (WirePlumber)
+-----------------------------------------------
+The internal speaker has NO usable hardware volume control (the codec's only
+analog amplifier is wired to the headphone path). PipeWire must apply volume
+in software, otherwise the speaker volume slider does nothing.
+
+This package installs /etc/wireplumber/wireplumber.conf.d/51-macbook-cs4208-softvol.conf
+(WirePlumber 0.5+, which is what Debian 13 ships). If you use an older
+WirePlumber 0.4, copy the Lua variant instead:
+
+    sudo cp /usr/share/doc/macbook12-audio-dkms/examples/51-macbook-cs4208-softvol.lua \
+            /etc/wireplumber/main.lua.d/
+    sudo rm /etc/wireplumber/wireplumber.conf.d/51-macbook-cs4208-softvol.conf
+
+Then run:
+
+    amixer -c0 sset Master 100% unmute
+    sudo alsactl store
+    systemctl --user restart wireplumber
+
+(If your audio controller is not at PCI 00:1f.3, adjust device.name in the
+config; find it with "wpctl status" or "pactl list cards short".)
+
+Verifying
+---------
+    dkms status                     # macbook12-audio-driver/0.3, ...: installed
+    modinfo snd-hda-codec-cirrus    # filename should contain /updates/
+    aplay -l                        # should list the analog devices of card 0
+
+Kernel updates
+--------------
+When you install a new kernel (linux-image + linux-headers), DKMS rebuilds
+this driver automatically (AUTOINSTALL=yes). Nothing to do.
+
+Troubleshooting
+---------------
+* Secure Boot: unsigned out-of-tree modules do not load with Secure Boot
+  enabled. Either disable Secure Boot, or enroll a MOK for DKMS
+  (see the dkms mok tools / Debian wiki "SecureBoot").
+
+* Build failure: check /tmp/macbook12-audio-dkms.build.log, or run:
+
+      dkms build -m macbook12-audio-driver -v 0.3 -k $(uname -r)
+
+* "Linux kernel source not found": for 6.12.x kernels a bundled source
+  snapshot is used automatically. For other kernel versions install the
+  matching source package, e.g.:
+
+      sudo apt install linux-source-6.12
+
+* Custom kernel: point the build at the matching kernel source tarball:
+
+      sudo MACBOOK12_AUDIO_KERNEL_SRC=/path/to/linux-6.12.x.tar.xz \
+           dkms build -m macbook12-audio-driver -v 0.3 -k $(uname -r)
+
+* "Module not found / still silent": make sure the module resolved to the
+  out-of-tree copy:
+
+      modinfo -n snd-hda-codec-cirrus     # must contain /updates/
+      sudo depmod -a && sudo reboot
+
+* Check the codec is seen at all:
+
+      cat /proc/asound/card0/codec* | grep -i codec
+
+  It should show "Cirrus Logic CS4208". If no codec is listed, the problem
+  is at the controller level, not this driver.
+
+Uninstall
+---------
+    sudo apt remove macbook12-audio-dkms
+
+This removes the DKMS module and built .ko files. The in-kernel
+snd-hda-codec-cirrus takes over again on the next reboot.
+
+Source and rebuild
+------------------
+The driver sources live in /usr/src/macbook12-audio-driver-0.3/. This
+package was built from a Debian source tree; rebuild with:
+
+    dpkg-buildpackage -b -us -uc
+
+Upstream: https://github.com/leifliddy/macbook12-audio-driver
