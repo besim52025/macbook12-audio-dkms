@@ -1,0 +1,18 @@
+# Build artifacts
+*.deb
+*.buildinfo
+*.changes
+*.dsc
+*.tar.gz
+debian/files
+debian/.debhelper/
+
+# DKMS build output (created on the installing machine)
+build/
+*.ko
+*.o
+*.mod
+*.mod.c
+Module.symvers
+modules.order
+.tmp_versions/
