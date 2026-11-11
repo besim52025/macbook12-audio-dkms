@@ -20,7 +20,7 @@ jobs:
       - name: Install build dependencies
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends git dpkg-dev ca-certificates
+          apt-get install -y --no-install-recommends git dpkg-dev ca-certificates build-essential
 
       - name: Check out sources
         uses: actions/checkout@v4
