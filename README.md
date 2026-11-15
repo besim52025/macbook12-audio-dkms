@@ -106,6 +106,6 @@ bundled `sound/pci/hda` snapshot: GPL-2.0-only).
 ## Upstream
 
 * Upstream project: https://github.com/leifliddy/macbook12-audio-driver
-* The Debian 13 (trixie) kernel-support fix developed in this repository was merged upstream in PR #75 on 2026-11-15. Upstream releases now include this fix natively; this repository remains as the DKMS .deb packaging for Debian 13.
+* The Debian 13 (trixie) kernel-support fix developed in this repository was merged upstream in PR #75: https://github.com/leifliddy/macbook12-audio-driver/pull/75 (2026-11-15). Upstream releases now include this fix natively; this repository remains as the DKMS .deb packaging for Debian 13.
 * If you find the codec work useful, star upstream first — this tree only
   packages and Debian-fits it.
