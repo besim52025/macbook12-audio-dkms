@@ -59,6 +59,19 @@ headers installation on Debian 13):
 sudo bash install.sh
 ```
 
+From a source clone: build the package first, then run the recovery
+installer from the directory the `.deb` lands in (`install.sh` is
+committed executable, so no `chmod +x` is needed after cloning):
+
+```bash
+git clone https://github.com/besim52025/macbook12-audio-dkms.git
+cd macbook12-audio-dkms
+dpkg-buildpackage -b -us -uc    # needs the dpkg-dev package; .deb appears one directory up
+cd ..
+sudo ./macbook12-audio-dkms/install.sh
+sudo reboot
+```
+
 ### Required: speaker software volume (WirePlumber)
 
 The internal speaker has **no usable hardware volume control** (the codec's
